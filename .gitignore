@@ -7,8 +7,8 @@ __pycache__/
 venv/
 .env
 
-# Keep stack.env in git as a template — add secrets to stack.env.local
-stack.env.local
+# stack.env holds real credentials — only stack.env.example is tracked
+stack.env
 
 # v1 files kept locally for reference — contain personal config, do not commit
 config.py

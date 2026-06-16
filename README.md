@@ -35,7 +35,11 @@ git clone https://github.com/gioxx/TransmissionCleaner.git
 cd TransmissionCleaner
 ```
 
-### 2 — Edit `stack.env`
+### 2 — Create `stack.env` from the example
+
+```bash
+cp stack.env.example stack.env
+```
 
 At minimum, set your Transmission server(s):
 
@@ -58,11 +62,11 @@ Open **http://your-host:8080** — done.
 
 ### Option A — Docker Compose (recommended)
 
-The repository ships a ready-to-use `docker-compose.yml`. Copy `stack.env`, fill in your values and run:
+The repository ships a ready-to-use `docker-compose.yml`. Copy the example, fill in your values and run:
 
 ```bash
-cp stack.env stack.env.local   # optional: keep your secrets out of git
-docker compose --env-file stack.env.local up -d --build
+cp stack.env.example stack.env
+docker compose up -d --build
 ```
 
 Full `docker-compose.yml` for reference:
@@ -117,7 +121,7 @@ docker run -d \
   --name transmission-cleaner \
   --restart unless-stopped \
   -p 8080:8080 \
-  --env-file stack.env \
+  --env-file stack.env \    # your local copy of stack.env.example
   transmission-cleaner:latest
 ```
 
@@ -128,7 +132,7 @@ docker run -d \
 1. In Portainer, go to **Stacks → Add stack**.
 2. Give the stack a name, e.g. `transmission-cleaner`.
 3. Choose **Web editor** and paste the `docker-compose.yml` content below.
-4. Scroll to **Environment variables** and click **Add an environment variable** for each setting, or switch to **Advanced mode** and paste the contents of `stack.env` directly.
+4. Scroll to **Environment variables** and click **Add an environment variable** for each setting, or switch to **Advanced mode** and paste the contents of `stack.env.example` directly.
 5. Click **Deploy the stack**.
 
 ```yaml
@@ -169,7 +173,7 @@ services:
 
 ## Configuration reference
 
-All configuration is done via environment variables (in `stack.env`, passed with `--env-file`, or set individually with `-e`).
+All configuration is done via environment variables (in your local `stack.env`, passed with `--env-file`, or set individually with `-e`). Use `stack.env.example` as the starting template.
 
 ### Transmission servers
 
