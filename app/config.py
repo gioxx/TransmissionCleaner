@@ -61,7 +61,6 @@ class Settings:
     def from_env(cls) -> "Settings":
         return cls(
             servers=_load_servers(),
-            servers=servers,
             days_to_wait=int(os.getenv("DAYS_TO_WAIT", "10")),
             min_ratio=float(os.getenv("MIN_RATIO", "0")),
             cleanup_schedule=os.getenv("CLEANUP_SCHEDULE", "0 6 * * *"),
