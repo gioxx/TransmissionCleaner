@@ -32,7 +32,7 @@ docker pull gioxx/transmissioncleaner:latest
 
 - **Multi-server** — monitor and clean multiple Transmission instances from a single container
 - **Rule-based deletion** — age threshold + optional minimum ratio + completeness guard (incomplete downloads are never touched)
-- **Scheduled runs** — any cron expression, default `0 6 * * *` (06:00 every day)
+- **Scheduled runs** — any cron expression, default `50 7 * * 3` (every Wednesday at 07:50)
 - **Web dashboard** — live torrent table with delete/keep badges, countdown to next run, last-run log
 - **Dry-run mode** — preview what *would* be deleted without touching anything, both via env var and from the UI
 - **Notifications** — Telegram, [Resend](https://resend.com) and SMTP, independently enabled, sent in parallel
