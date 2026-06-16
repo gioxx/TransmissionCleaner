@@ -109,7 +109,7 @@ async def dashboard(request: Request):
             "notifications": settings.active_notifications,
         },
     }
-    return templates.TemplateResponse("index.html", ctx)
+    return templates.TemplateResponse(request, "index.html", ctx)
 
 
 @app.post("/run")

@@ -42,7 +42,7 @@ def fetch_server_torrents(server: ServerConfig) -> ServerResult:
     try:
         client = _make_client(server)
         for t in client.get_torrents():
-            date_added = _coerce_utc(t.date_added)
+            date_added = _coerce_utc(t.added_date)
             ratio = t.upload_ratio if t.upload_ratio is not None else 0.0
             if ratio < 0:
                 ratio = 0.0
