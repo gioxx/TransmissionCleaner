@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import logging
-import urllib.parse
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 
@@ -26,6 +25,7 @@ class AppState:
     last_log: str = ""
     last_deleted: int = 0
     last_errors: int = 0
+    flash: str = ""
 
     def update(self, result: CleanupResult) -> None:
         self.last_run_time = result.timestamp
@@ -86,6 +86,7 @@ async def dashboard(request: Request):
     connected_count = sum(1 for sr in server_results if sr.connected)
     next_run = _next_run()
 
+    flash, state.flash = state.flash, ""
     ctx = {
         "request": request,
         "server_results": server_results,
@@ -100,7 +101,7 @@ async def dashboard(request: Request):
         "last_log": state.last_log,
         "last_deleted": state.last_deleted,
         "last_errors": state.last_errors,
-        "message": request.query_params.get("msg", ""),
+        "message": flash,
         "cfg": {
             "days_to_wait": settings.days_to_wait,
             "min_ratio": settings.min_ratio,
@@ -118,9 +119,9 @@ async def manual_run(request: Request):
     result = await asyncio.to_thread(run_cleanup, dry)
     state.update(result)
     await notify_all(result)
-    verb = "dry run" if dry else "cleanup"
-    msg = urllib.parse.quote(f"{verb.capitalize()} complete — {result.deleted_count} removed, {result.error_count} errors")
-    return RedirectResponse(f"/?msg={msg}", status_code=303)
+    verb = "Dry run" if dry else "Cleanup"
+    state.flash = f"{verb} complete — {result.deleted_count} removed, {result.error_count} errors"
+    return RedirectResponse("/", status_code=303)
 
 
 @app.get("/api/status")
