@@ -1,7 +1,7 @@
 services:
   transmission-cleaner:
-    build: .
-    image: transmission-cleaner:latest
+    image: ghcr.io/gioxx/transmissioncleaner:latest
+    # build: .   # uncomment to build from source instead
     container_name: transmission-cleaner
     ports:
       - "${HOST_PORT:-8080}:8080"  # change HOST_PORT in .env to use a different host port

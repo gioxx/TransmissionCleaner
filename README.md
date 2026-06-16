@@ -1,6 +1,30 @@
-# 🧹 Transmission Cleaner v2
+# 🧹 Transmission Cleaner
+
+[![Docker Build/Publish](https://github.com/gioxx/TransmissionCleaner/actions/workflows/Docker-BuildPublish.yml/badge.svg)](https://github.com/gioxx/TransmissionCleaner/actions/workflows/Docker-BuildPublish.yml)
+[![GitHub release](https://img.shields.io/github/v/release/gioxx/TransmissionCleaner)](https://github.com/gioxx/TransmissionCleaner/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/gioxx/transmissioncleaner)](https://hub.docker.com/r/gioxx/transmissioncleaner)
+[![GitHub license](https://img.shields.io/github/license/gioxx/TransmissionCleaner)](LICENSE)
 
 Automated cleanup for one or more [Transmission](https://transmissionbt.com/) instances. Removes torrents that have been seeding (or are stopped) for longer than a configurable number of days, optionally enforcing a minimum upload ratio before deletion. Ships as a Docker container with a built-in web dashboard, scheduled runs, and multi-channel notifications.
+
+---
+
+## Pre-built images
+
+Images are built automatically for `linux/amd64` and `linux/arm64` on every push to `main` (tagged `dev`) and on every release tag (tagged `latest` + version number).
+
+| Registry | Image |
+|---|---|
+| GitHub Container Registry | `ghcr.io/gioxx/transmissioncleaner:latest` |
+| Docker Hub | `gioxx/transmissioncleaner:latest` |
+
+```bash
+# GHCR
+docker pull ghcr.io/gioxx/transmissioncleaner:latest
+
+# Docker Hub
+docker pull gioxx/transmissioncleaner:latest
+```
 
 ---
 
@@ -59,13 +83,15 @@ Edit `config/servers.json` with your Transmission server(s) — the file support
 
 Then set your cleanup rules and notification settings in `stack.env`.
 
-### 3 — Build and run
+### 3 — Start
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-Open **http://your-host:8080** — done.
+The pre-built image is pulled automatically from GHCR. Open **http://your-host:8080** — done.
+
+> To build from source instead, uncomment `build: .` in `docker-compose.yml` and run `docker compose up -d --build`.
 
 ---
 
@@ -73,25 +99,25 @@ Open **http://your-host:8080** — done.
 
 ### Option A — Docker Compose (recommended)
 
-The repository ships a ready-to-use `docker-compose.yml`. Copy the examples, fill in your values and run:
+The repository ships a ready-to-use `docker-compose.yml` that pulls the pre-built image from GHCR. Copy the examples, fill in your values and run:
 
 ```bash
 cp stack.env.example stack.env
 cp config/servers.json.example config/servers.json
 cp .env.example .env          # only if you need a port other than 8080
 # edit the three files, then:
-docker compose up -d --build
+docker compose up -d
 ```
 
-The `config/` directory is mounted as a volume, so `servers.json` persists across container restarts and rebuilds.
+The `config/` directory is mounted as a volume, so `servers.json` persists across container restarts and updates.
 
 Full `docker-compose.yml` for reference:
 
 ```yaml
 services:
   transmission-cleaner:
-    build: .
-    image: transmission-cleaner:latest
+    image: ghcr.io/gioxx/transmissioncleaner:latest
+    # build: .   # uncomment to build from source instead
     container_name: transmission-cleaner
     ports:
       - "${HOST_PORT:-8080}:8080"  # set HOST_PORT in .env
@@ -115,17 +141,14 @@ services:
 If you prefer a one-liner, build the image first and then run it:
 
 ```bash
-# Build
-docker build -t transmission-cleaner:latest .
-
-# Run with servers.json mounted from ./config
+# Run using the pre-built GHCR image
 docker run -d \
   --name transmission-cleaner \
   --restart unless-stopped \
   -p 8080:8080 \
   -v "$(pwd)/config:/config" \
   --env-file stack.env \
-  transmission-cleaner:latest
+  ghcr.io/gioxx/transmissioncleaner:latest
 ```
 
 For a quick single-server test without a config file, use the inline fallback:
