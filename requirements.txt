@@ -1,4 +1,4 @@
-fastapi>=0.115
+fastapi>=0.137.1
 uvicorn[standard]>=0.32
 transmission-rpc>=7.0
 apscheduler>=3.10
