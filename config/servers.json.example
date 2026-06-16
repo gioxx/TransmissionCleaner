@@ -1,0 +1,24 @@
+[
+  {
+    // Display name shown in the web UI and notification messages
+    "name": "S1",
+
+    // Hostname or IP address of the Transmission instance
+    "host": "transmission-1.local",
+
+    // RPC port (optional, default: 9091)
+    "port": 9091,
+
+    // Leave user and password empty if authentication is disabled
+    "user": "admin",
+    "password": "changeme"
+  },
+
+  {
+    "name": "S2",
+    "host": "transmission-2.local",
+    "port": 9091,
+    "user": "admin",
+    "password": "changeme"
+  }
+]

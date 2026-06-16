@@ -10,6 +10,9 @@ venv/
 # stack.env holds real credentials — only stack.env.example is tracked
 stack.env
 
+# servers.json holds real credentials — only servers.json.example is tracked
+config/servers.json
+
 # v1 files kept locally for reference — contain personal config, do not commit
-config.py
-Transmission_Cleaner.py
+/config.py
+/Transmission_Cleaner.py

@@ -35,18 +35,28 @@ git clone https://github.com/gioxx/TransmissionCleaner.git
 cd TransmissionCleaner
 ```
 
-### 2 — Create `stack.env` from the example
+### 2 — Create your config files
 
 ```bash
 cp stack.env.example stack.env
+cp config/servers.json.example config/servers.json
 ```
 
-At minimum, set your Transmission server(s):
+Edit `config/servers.json` with your Transmission server(s) — the file supports `//` and `/* */` comments:
 
-```env
-TRANSMISSION_SERVERS=[{"name":"Home","host":"192.168.1.10","port":9091,"user":"admin","password":"yourpassword"}]
-DAYS_TO_WAIT=10
+```jsonc
+[
+  {
+    "name": "Home",
+    "host": "192.168.1.10",
+    "port": 9091,
+    "user": "admin",
+    "password": "yourpassword"
+  }
+]
 ```
+
+Then set your cleanup rules and notification settings in `stack.env`.
 
 ### 3 — Build and run
 
@@ -62,12 +72,16 @@ Open **http://your-host:8080** — done.
 
 ### Option A — Docker Compose (recommended)
 
-The repository ships a ready-to-use `docker-compose.yml`. Copy the example, fill in your values and run:
+The repository ships a ready-to-use `docker-compose.yml`. Copy the examples, fill in your values and run:
 
 ```bash
 cp stack.env.example stack.env
+cp config/servers.json.example config/servers.json
+# edit stack.env and config/servers.json
 docker compose up -d --build
 ```
+
+The `config/` directory is mounted as a volume, so `servers.json` persists across container restarts and rebuilds.
 
 Full `docker-compose.yml` for reference:
 
@@ -79,6 +93,8 @@ services:
     container_name: transmission-cleaner
     ports:
       - "${WEB_PORT:-8080}:8080"
+    volumes:
+      - ./config:/config   # servers.json lives here
     env_file:
       - stack.env
     restart: unless-stopped
@@ -100,28 +116,26 @@ If you prefer a one-liner, build the image first and then run it:
 # Build
 docker build -t transmission-cleaner:latest .
 
-# Run (single server, Telegram notifications)
+# Run with servers.json mounted from ./config
 docker run -d \
   --name transmission-cleaner \
   --restart unless-stopped \
   -p 8080:8080 \
-  -e TRANSMISSION_SERVERS='[{"name":"Home","host":"192.168.1.10","port":9091,"user":"admin","password":"s3cr3t"}]' \
-  -e DAYS_TO_WAIT=10 \
-  -e CLEANUP_SCHEDULE="0 6 * * *" \
-  -e TELEGRAM_ENABLED=true \
-  -e TELEGRAM_BOT_TOKEN=123456789:AABBCCDDeeffGGHHii \
-  -e TELEGRAM_CHAT_ID=-100123456789 \
+  -v "$(pwd)/config:/config" \
+  --env-file stack.env \
   transmission-cleaner:latest
 ```
 
-To pass all settings from a file instead of individual `-e` flags:
+For a quick single-server test without a config file, use the inline fallback:
 
 ```bash
 docker run -d \
   --name transmission-cleaner \
   --restart unless-stopped \
   -p 8080:8080 \
-  --env-file stack.env \    # your local copy of stack.env.example
+  -e TRANSMISSION_SERVERS='[{"name":"Home","host":"192.168.1.10","port":9091,"user":"admin","password":"s3cr3t"}]' \
+  -e DAYS_TO_WAIT=10 \
+  -e CLEANUP_SCHEDULE="50 7 * * 3" \
   transmission-cleaner:latest
 ```
 
@@ -144,8 +158,10 @@ services:
     container_name: transmission-cleaner
     ports:
       - "8080:8080"
+    volumes:
+      - /your/host/path/config:/config   # put servers.json here
     environment:
-      TRANSMISSION_SERVERS: '[{"name":"Home","host":"192.168.1.10","port":9091,"user":"admin","password":"s3cr3t"}]'
+      SERVERS_FILE: "/config/servers.json"
       DAYS_TO_WAIT: "10"
       MIN_RATIO: "0"
       CLEANUP_SCHEDULE: "50 7 * * 3"
@@ -167,7 +183,7 @@ services:
     restart: unless-stopped
 ```
 
-> **Portainer tip** — use the **Secrets** feature or Portainer's environment variable editor to avoid putting passwords in plain text inside the stack definition.
+> **Portainer tip** — use the **Secrets** feature or Portainer's environment variable editor to avoid putting passwords in plain text inside the stack definition. For `servers.json`, bind-mount a directory from the host (e.g. `/opt/transmission-cleaner/config`) so credentials stay on the host filesystem and survive stack redeployments.
 
 ---
 
@@ -177,40 +193,53 @@ All configuration is done via environment variables (in your local `stack.env`, 
 
 ### Transmission servers
 
-| Variable | Required | Example |
-|---|---|---|
-| `TRANSMISSION_SERVERS` | **Yes** | See below |
+Servers are configured via a **JSON file** mounted into the container. This is the recommended approach as it supports comments and multi-line formatting.
 
-`TRANSMISSION_SERVERS` is a **JSON array**. Each element describes one Transmission instance:
+| Variable | Default | Description |
+|---|---|---|
+| `SERVERS_FILE` | `/config/servers.json` | Path to the servers config file inside the container |
+
+**`config/servers.json` format** (supports `//` and `/* */` comments):
 
 ```jsonc
 [
   {
-    "name": "S1",        // display name in the UI and notifications
+    // Display name shown in the web UI and notifications
+    "name": "S1",
+
+    // Hostname or IP address of the Transmission instance
     "host": "192.168.1.10",
-    "port": 9091,        // optional, default 9091
+
+    // RPC port — optional, default 9091
+    "port": 9091,
+
+    // Leave empty if authentication is disabled
+    "user": "admin",
+    "password": "secret"
+  },
+  {
+    "name": "S2",
+    "host": "nas.local",
+    "port": 9091,
     "user": "admin",
     "password": "secret"
   }
 ]
 ```
 
-**Single server:**
+Copy the provided example to get started:
+
+```bash
+cp config/servers.json.example config/servers.json
+```
+
+**Fallback — inline env var**
+
+If `SERVERS_FILE` does not exist, the app falls back to the `TRANSMISSION_SERVERS` environment variable. Useful for quick tests or single-server setups that don't need a mounted file:
+
 ```env
 TRANSMISSION_SERVERS=[{"name":"Home","host":"192.168.1.10","port":9091,"user":"admin","password":"secret"}]
 ```
-
-**Two servers:**
-```env
-TRANSMISSION_SERVERS=[{"name":"NAS","host":"nas.local","port":9091,"user":"admin","password":"pass1"},{"name":"VPS","host":"vps.example.com","port":9091,"user":"torrent","password":"pass2"}]
-```
-
-**No authentication:**
-```env
-TRANSMISSION_SERVERS=[{"name":"Local","host":"127.0.0.1","port":9091,"user":"","password":""}]
-```
-
-> On Windows or shells that mangle single quotes, use double quotes and escape the inner ones, or use `--env-file`.
 
 ---
 
