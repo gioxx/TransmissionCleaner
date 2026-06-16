@@ -117,8 +117,7 @@ async def manual_run(request: Request):
     dry = request.query_params.get("dry") == "1"
     result = await asyncio.to_thread(run_cleanup, dry)
     state.update(result)
-    if not dry:
-        await notify_all(result)
+    await notify_all(result)
     verb = "dry run" if dry else "cleanup"
     msg = urllib.parse.quote(f"{verb.capitalize()} complete — {result.deleted_count} removed, {result.error_count} errors")
     return RedirectResponse(f"/?msg={msg}", status_code=303)
