@@ -527,21 +527,6 @@ docker logs -f transmission-cleaner
 
 ---
 
-## Migrating from v1
-
-The original `Transmission_Cleaner.py` / `config.py` pair is preserved in the repository root but is no longer used by Docker. Key differences:
-
-| v1 | v2 |
-|---|---|
-| `config.py` (Python class) | `stack.env` (environment variables) |
-| System `mail` command | Telegram / Resend / SMTP (all optional) |
-| Runs once via cron job | Scheduler built-in, cron expression via `CLEANUP_SCHEDULE` |
-| No web UI | Dashboard at `:8080` |
-| `transmissionrpc` library | `transmission-rpc` ≥ 7.0 |
-| Age only | Age + optional minimum ratio |
-
----
-
 ## License
 
 [MIT](LICENSE)
