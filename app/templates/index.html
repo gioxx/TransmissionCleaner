@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transmission Cleaner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    .badge { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium; }
+    .badge-green  { @apply bg-emerald-100 text-emerald-800; }
+    .badge-blue   { @apply bg-blue-100 text-blue-800; }
+    .badge-gray   { @apply bg-slate-100 text-slate-600; }
+    .badge-yellow { @apply bg-amber-100 text-amber-800; }
+    .badge-red    { @apply bg-red-100 text-red-700; }
+    .stat-card    { @apply bg-white rounded-2xl p-5 shadow-sm border border-slate-100; }
+    .section      { @apply bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden; }
+    .section-head { @apply px-6 py-4 border-b border-slate-100 flex items-center justify-between; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+  <!-- Top bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="text-xl">🧹</span>
+        <span class="font-semibold text-slate-900 text-lg">Transmission Cleaner</span>
+        {% if cfg.dry_run %}
+        <span class="badge badge-yellow">DRY RUN</span>
+        {% endif %}
+      </div>
+      <div class="flex items-center gap-6 text-sm text-slate-500">
+        <div class="hidden sm:flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block"></span>
+          Next run <span id="countdown" class="font-mono text-slate-700 ml-1">—</span>
+        </div>
+        <div class="hidden md:block">
+          Last run: <span class="text-slate-700">{{ last_run_str }}</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- Flash message -->
+    {% if message %}
+    <div class="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-sm flex items-center gap-2">
+      <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- Action bar -->
+    <div class="flex flex-wrap gap-2">
+      <form method="post" action="/run">
+        <button type="submit"
+          class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Run cleanup now
+        </button>
+      </form>
+      <form method="post" action="/run?dry=1">
+        <button type="submit"
+          class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          Dry run
+        </button>
+      </form>
+      <a href="/"
+        class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Refresh
+      </a>
+    </div>
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="stat-card">
+        <div class="text-2xl font-bold text-slate-900">{{ server_count }}</div>
+        <div class="text-sm text-slate-500 mt-1">Servers</div>
+        <div class="text-xs mt-2 {% if connected_count < server_count %}text-red-500{% else %}text-emerald-600{% endif %}">
+          {{ connected_count }}/{{ server_count }} connected
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="text-2xl font-bold text-slate-900">{{ total_torrents }}</div>
+        <div class="text-sm text-slate-500 mt-1">Total torrents</div>
+        <div class="text-xs text-slate-400 mt-2">across all servers</div>
+      </div>
+      <div class="stat-card border-red-100">
+        <div class="text-2xl font-bold {% if to_delete_count > 0 %}text-red-600{% else %}text-slate-900{% endif %}">{{ to_delete_count }}</div>
+        <div class="text-sm text-slate-500 mt-1">To be removed</div>
+        <div class="text-xs text-slate-400 mt-2">on next run</div>
+      </div>
+      <div class="stat-card border-emerald-100">
+        <div class="text-2xl font-bold text-emerald-700">{{ to_keep_count }}</div>
+        <div class="text-sm text-slate-500 mt-1">Keeping</div>
+        <div class="text-xs text-slate-400 mt-2">still seeding</div>
+      </div>
+    </div>
+
+    <!-- Settings summary -->
+    <div class="section">
+      <div class="section-head">
+        <h2 class="font-semibold text-slate-900">⚙️ Settings</h2>
+        <span class="text-xs text-slate-400 font-mono">{{ cfg.cleanup_schedule }}</span>
+      </div>
+      <div class="px-6 py-4 grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3 text-sm">
+        <div>
+          <div class="text-slate-500 text-xs uppercase tracking-wide mb-1">Retain for</div>
+          <div class="font-medium">{{ cfg.days_to_wait }} days</div>
+        </div>
+        <div>
+          <div class="text-slate-500 text-xs uppercase tracking-wide mb-1">Min ratio</div>
+          <div class="font-medium">{% if cfg.min_ratio > 0 %}{{ cfg.min_ratio }}{% else %}disabled{% endif %}</div>
+        </div>
+        <div>
+          <div class="text-slate-500 text-xs uppercase tracking-wide mb-1">Next run</div>
+          <div class="font-medium font-mono text-xs">{{ next_run_str }}</div>
+        </div>
+        <div>
+          <div class="text-slate-500 text-xs uppercase tracking-wide mb-1">Notifications</div>
+          <div class="flex flex-wrap gap-1 mt-1">
+            {% if cfg.notifications %}
+              {% for n in cfg.notifications %}
+              <span class="badge badge-blue">{{ n }}</span>
+              {% endfor %}
+            {% else %}
+            <span class="text-slate-400">none</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Per-server sections -->
+    {% for sr in server_results %}
+    <div class="section">
+      <div class="section-head">
+        <div class="flex items-center gap-3">
+          <h2 class="font-semibold text-slate-900">📡 {{ sr.name }}</h2>
+          <span class="text-xs text-slate-400 font-mono">{{ sr.host }}</span>
+          {% if sr.connected %}
+          <span class="badge badge-green">Connected</span>
+          {% else %}
+          <span class="badge badge-red">Offline</span>
+          {% endif %}
+        </div>
+        <div class="text-sm text-slate-500">
+          {{ sr.torrents|length }} torrents
+          {% if sr.to_delete %}
+          · <span class="text-red-600 font-medium">{{ sr.to_delete|length }} to remove</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if not sr.connected %}
+      <div class="px-6 py-8 text-center text-sm text-red-500">
+        <div class="text-3xl mb-2">⚠️</div>
+        <div class="font-medium">Cannot reach {{ sr.name }}</div>
+        <div class="text-slate-400 mt-1 font-mono text-xs">{{ sr.error }}</div>
+      </div>
+      {% elif sr.torrents %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-100 text-xs text-slate-500 uppercase tracking-wide">
+              <th class="text-left px-6 py-3 font-medium">Name</th>
+              <th class="text-left px-6 py-3 font-medium">Status</th>
+              <th class="text-right px-6 py-3 font-medium">Size</th>
+              <th class="text-right px-6 py-3 font-medium">Age</th>
+              <th class="text-right px-6 py-3 font-medium">Ratio</th>
+              <th class="text-right px-6 py-3 font-medium">Done</th>
+              <th class="text-right px-6 py-3 font-medium">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for t in sr.torrents %}
+            <tr class="{% if t.will_delete %}bg-red-50 hover:bg-red-100{% else %}hover:bg-slate-50{% endif %} transition-colors">
+              <td class="px-6 py-3 max-w-xs">
+                <div class="truncate font-medium text-slate-800" title="{{ t.name }}">{{ t.name }}</div>
+                {% if t.delete_error %}
+                <div class="text-xs text-red-500 mt-0.5">Error: {{ t.delete_error }}</div>
+                {% endif %}
+              </td>
+              <td class="px-6 py-3">
+                <span class="badge {{ t.status_class }}">{{ t.status }}</span>
+              </td>
+              <td class="px-6 py-3 text-right font-mono text-slate-600">{{ t.size_str }}</td>
+              <td class="px-6 py-3 text-right">
+                <span class="{% if t.age_days >= cfg.days_to_wait %}text-amber-600 font-medium{% else %}text-slate-500{% endif %}">
+                  {{ t.age_days }}d
+                </span>
+              </td>
+              <td class="px-6 py-3 text-right">
+                <span class="{% if cfg.min_ratio > 0 and t.ratio < cfg.min_ratio %}text-amber-600{% else %}text-slate-600{% endif %} font-mono">
+                  {{ "%.2f"|format(t.ratio) }}
+                </span>
+              </td>
+              <td class="px-6 py-3 text-right">
+                {% if t.progress_pct >= 100 %}
+                <span class="text-emerald-600 font-medium">100%</span>
+                {% else %}
+                <div class="flex items-center justify-end gap-2">
+                  <div class="w-16 bg-slate-200 rounded-full h-1.5">
+                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: {{ t.progress_pct }}%"></div>
+                  </div>
+                  <span class="text-slate-500 font-mono text-xs w-9 text-right">{{ t.progress_pct }}%</span>
+                </div>
+                {% endif %}
+              </td>
+              <td class="px-6 py-3 text-right">
+                {% if t.will_delete %}
+                <span class="badge badge-red">🗑 Delete</span>
+                {% else %}
+                <span class="badge badge-green">✓ Keep</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="px-6 py-8 text-center text-sm text-slate-400">No torrents found</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    {% if not server_results %}
+    <div class="section px-6 py-12 text-center text-slate-400">
+      <div class="text-4xl mb-3">📭</div>
+      <div class="font-medium">No servers configured</div>
+      <div class="text-xs mt-2">Set the <code class="font-mono bg-slate-100 px-1 py-0.5 rounded">TRANSMISSION_SERVERS</code> environment variable</div>
+    </div>
+    {% endif %}
+
+    <!-- Last run log -->
+    {% if last_log %}
+    <div class="section">
+      <div class="section-head">
+        <h2 class="font-semibold text-slate-900">📋 Last run log</h2>
+        <span class="text-xs text-slate-400">{{ last_run_str }}</span>
+      </div>
+      <div class="px-6 py-4">
+        <pre class="font-mono text-xs text-slate-600 bg-slate-50 rounded-xl p-4 overflow-x-auto whitespace-pre-wrap leading-relaxed">{{ last_log }}</pre>
+      </div>
+    </div>
+    {% endif %}
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-xs text-slate-400">
+    Transmission Cleaner v2 · Page refreshes automatically every 60 seconds
+    · <a href="/api/torrents" class="underline hover:text-slate-600">JSON API</a>
+  </footer>
+
+  <meta http-equiv="refresh" content="60">
+
+  <script>
+    const nextRunISO = "{{ next_run_iso }}";
+    const el = document.getElementById("countdown");
+
+    function tick() {
+      if (!nextRunISO) { el.textContent = "—"; return; }
+      const diff = new Date(nextRunISO) - new Date();
+      if (diff <= 0) { el.textContent = "any moment…"; return; }
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1_000);
+      el.textContent = h > 0
+        ? `${h}h ${String(m).padStart(2,"0")}m`
+        : `${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`;
+    }
+    tick();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+services:
+  transmission-cleaner:
+    build: .
+    image: transmission-cleaner:latest
+    container_name: transmission-cleaner
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    env_file:
+      - stack.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/status')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

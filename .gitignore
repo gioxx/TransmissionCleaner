@@ -1,0 +1,15 @@
+.tokensave
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Keep stack.env in git as a template — add secrets to stack.env.local
+stack.env.local
+
+# v1 files kept locally for reference — contain personal config, do not commit
+config.py
+Transmission_Cleaner.py
