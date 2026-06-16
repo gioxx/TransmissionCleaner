@@ -25,7 +25,7 @@ jobs:
         uses: docker/metadata-action@v6.1.0
         with:
           images: |
-            gioxx/${{ github.event.repository.name }}
+            gfsolone/${{ github.event.repository.name }}
             ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/main' }}
@@ -71,6 +71,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: gioxx/${{ github.event.repository.name }}
+          repository: gfsolone/${{ github.event.repository.name }}
           short-description: ${{ github.event.repository.description }}
         if: github.ref != 'refs/heads/main'
