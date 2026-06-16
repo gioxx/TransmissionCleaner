@@ -2,7 +2,7 @@
 
 [![Docker Build/Publish](https://github.com/gioxx/TransmissionCleaner/actions/workflows/Docker-BuildPublish.yml/badge.svg)](https://github.com/gioxx/TransmissionCleaner/actions/workflows/Docker-BuildPublish.yml)
 [![GitHub release](https://img.shields.io/github/v/release/gioxx/TransmissionCleaner)](https://github.com/gioxx/TransmissionCleaner/releases)
-[![Docker Pulls](https://img.shields.io/docker/pulls/gioxx/transmissioncleaner)](https://hub.docker.com/r/gioxx/transmissioncleaner)
+[![Docker Pulls](https://img.shields.io/docker/pulls/gfsolone/transmissioncleaner)](https://hub.docker.com/r/gfsolone/transmissioncleaner)
 [![GitHub license](https://img.shields.io/github/license/gioxx/TransmissionCleaner)](LICENSE)
 
 Automated cleanup for one or more [Transmission](https://transmissionbt.com/) instances. Removes torrents that have been seeding (or are stopped) for longer than a configurable number of days, optionally enforcing a minimum upload ratio before deletion. Ships as a Docker container with a built-in web dashboard, scheduled runs, and multi-channel notifications.
@@ -16,14 +16,14 @@ Images are built automatically for `linux/amd64` and `linux/arm64` on every push
 | Registry | Image |
 |---|---|
 | GitHub Container Registry | `ghcr.io/gioxx/transmissioncleaner:latest` |
-| Docker Hub | `gioxx/transmissioncleaner:latest` |
+| Docker Hub | `gfsolone/transmissioncleaner:latest` |
 
 ```bash
 # GHCR
 docker pull ghcr.io/gioxx/transmissioncleaner:latest
 
 # Docker Hub
-docker pull gioxx/transmissioncleaner:latest
+docker pull gfsolone/transmissioncleaner:latest
 ```
 
 ---
