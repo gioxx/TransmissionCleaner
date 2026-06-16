@@ -40,6 +40,7 @@ cd TransmissionCleaner
 ```bash
 cp stack.env.example stack.env
 cp config/servers.json.example config/servers.json
+cp .env.example .env
 ```
 
 Edit `config/servers.json` with your Transmission server(s) — the file supports `//` and `/* */` comments:
@@ -77,7 +78,8 @@ The repository ships a ready-to-use `docker-compose.yml`. Copy the examples, fil
 ```bash
 cp stack.env.example stack.env
 cp config/servers.json.example config/servers.json
-# edit stack.env and config/servers.json
+cp .env.example .env          # only if you need a port other than 8080
+# edit the three files, then:
 docker compose up -d --build
 ```
 
@@ -92,7 +94,7 @@ services:
     image: transmission-cleaner:latest
     container_name: transmission-cleaner
     ports:
-      - "${WEB_PORT:-8080}:8080"
+      - "${HOST_PORT:-8080}:8080"  # set HOST_PORT in .env
     volumes:
       - ./config:/config   # servers.json lives here
     env_file:
@@ -359,11 +361,19 @@ SMTP_TLS=false
 
 ---
 
-### Web UI
+### Web UI port
 
-| Variable | Default | Description |
-|---|---|---|
-| `WEB_PORT` | `8080` | Host port to bind the web interface to |
+The host port is configured via `.env` (not `stack.env`), because Docker Compose reads `.env` automatically for variable substitution in the compose file — `env_file:` only passes variables into the container and cannot affect port mapping.
+
+```bash
+cp .env.example .env
+# then edit .env:
+HOST_PORT=8081
+```
+
+| File | Variable | Default | Description |
+|---|---|---|---|
+| `.env` | `HOST_PORT` | `8080` | Port exposed on the host |
 
 ---
 

@@ -4,7 +4,7 @@ services:
     image: transmission-cleaner:latest
     container_name: transmission-cleaner
     ports:
-      - "${WEB_PORT:-8080}:8080"
+      - "${HOST_PORT:-8080}:8080"  # change HOST_PORT in .env to use a different host port
     volumes:
       - ./config:/config   # mount your servers.json here
     env_file:

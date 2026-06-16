@@ -7,8 +7,9 @@ __pycache__/
 venv/
 .env
 
-# stack.env holds real credentials — only stack.env.example is tracked
+# stack.env and .env hold local config — only the .example files are tracked
 stack.env
+.env
 
 # servers.json holds real credentials — only servers.json.example is tracked
 config/servers.json
