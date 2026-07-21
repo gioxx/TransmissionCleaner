@@ -2,6 +2,15 @@
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cleanup history</title><script src="https://cdn.tailwindcss.com"></script></head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <a href="/" class="flex items-center gap-3 hover:opacity-75 transition-opacity">
+        <span class="text-xl">🧹</span>
+        <span class="font-semibold text-slate-900 text-lg">Transmission Cleaner</span>
+      </a>
+      <a class="text-sm text-slate-500 underline hover:text-slate-800" href="/">Dashboard</a>
+    </div>
+  </header>
   <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-5">
     <div class="flex items-center justify-between"><h1 class="text-2xl font-semibold">📚 Cleanup history</h1><a class="underline text-sm" href="/">← Dashboard</a></div>
     <form class="flex gap-2" method="get" action="/history"><input class="flex-1 rounded-lg border border-slate-200 px-3 py-2" name="q" value="{{ query }}" placeholder="Search notification text…"><button class="rounded-lg bg-slate-900 px-4 py-2 text-white" type="submit">Search</button></form>
