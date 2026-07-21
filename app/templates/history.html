@@ -20,12 +20,7 @@
     {% else %}<div class="rounded-2xl bg-white p-10 text-center text-slate-400">No matching cleanups.</div>{% endfor %}
     {% if pages > 1 %}<div class="flex justify-between text-sm"><a {% if page <= 1 %}class="pointer-events-none text-slate-300"{% endif %} href="/history?q={{ query }}&page={{ page - 1 }}">← Newer</a><span>Page {{ page }} / {{ pages }}</span><a {% if page >= pages %}class="pointer-events-none text-slate-300"{% endif %} href="/history?q={{ query }}&page={{ page + 1 }}">Older →</a></div>{% endif %}
   </main>
-  <footer class="max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-xs text-slate-400">
-    Transmission Cleaner <span class="font-medium text-slate-500">v1.1.0</span> · Page refreshes automatically every 60 seconds
-    · <a href="/api/history" class="underline hover:text-slate-600">History API</a>
-    · <a href="https://github.com/gioxx/TransmissionCleaner" class="underline hover:text-slate-600">GitHub</a>
-    · <a href="https://github.com/gioxx/TransmissionCleaner#readme" class="underline hover:text-slate-600">Docs</a>
-  </footer>
+  {% include "_footer.html" %}
   <meta http-equiv="refresh" content="60">
   <script>
     const nextRunISO = "{{ next_run_iso }}";
