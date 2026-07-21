@@ -7,10 +7,15 @@
     <form class="flex gap-2" method="get" action="/history"><input class="flex-1 rounded-lg border border-slate-200 px-3 py-2" name="q" value="{{ query }}" placeholder="Search notification text…"><button class="rounded-lg bg-slate-900 px-4 py-2 text-white" type="submit">Search</button></form>
     <p class="text-sm text-slate-500">{{ total }} effective cleanup(s)</p>
     {% for item in items %}
-    <article class="rounded-2xl bg-white border border-slate-100 shadow-sm overflow-hidden">
-      <div class="px-5 py-3 border-b border-slate-100 flex justify-between text-sm"><span class="font-medium">{{ item.timestamp.strftime('%Y-%m-%d %H:%M:%S') }} · {{ item.trigger }}</span><span>{{ item.deleted_count }} removed · {{ item.error_count }} errors</span></div>
-      <pre class="p-5 text-xs whitespace-pre-wrap overflow-x-auto">{{ item.log }}</pre>
-    </article>
+    <details class="group rounded-2xl bg-white border border-slate-100 shadow-sm overflow-hidden"{% if query %} open{% endif %}>
+      <summary class="list-none cursor-pointer px-5 py-3 flex items-center justify-between gap-4 text-sm select-none hover:bg-slate-50">
+        <span class="flex items-center gap-2 font-medium"><span class="text-slate-400 transition-transform group-open:rotate-90">▶</span>{{ item.timestamp.strftime('%Y-%m-%d %H:%M:%S') }} · {{ item.trigger }}</span>
+        <span class="shrink-0 text-slate-500">{{ item.deleted_count }} removed · {{ item.error_count }} errors</span>
+      </summary>
+      <div class="border-t border-slate-100">
+        <pre class="p-5 text-xs whitespace-pre-wrap overflow-x-auto">{{ item.log }}</pre>
+      </div>
+    </details>
     {% else %}<div class="rounded-2xl bg-white p-10 text-center text-slate-400">No matching cleanups.</div>{% endfor %}
     {% if pages > 1 %}<div class="flex justify-between text-sm"><a {% if page <= 1 %}class="pointer-events-none text-slate-300"{% endif %} href="/history?q={{ query }}&page={{ page - 1 }}">← Newer</a><span>Page {{ page }} / {{ pages }}</span><a {% if page >= pages %}class="pointer-events-none text-slate-300"{% endif %} href="/history?q={{ query }}&page={{ page + 1 }}">Older →</a></div>{% endif %}
   </main>
