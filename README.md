@@ -11,7 +11,7 @@ Automated cleanup for one or more [Transmission](https://transmissionbt.com/) in
 
 ## Pre-built images
 
-Images are built automatically for `linux/amd64` and `linux/arm64` on every push to `main` (tagged `dev`) and on every release tag (tagged `latest` + version number).
+Images are built automatically for `linux/amd64` and `linux/arm64` on every push to `main` or the cleanup-history test branch (tagged `dev`) and on every release tag (tagged `latest` + version number). Current feature version: `1.1.0`.
 
 | Registry | Image |
 |---|---|
@@ -39,6 +39,7 @@ docker pull gfsolone/transmissioncleaner:latest
 - **REST API** — `/api/status` and `/api/torrents` for scripting or external integrations
 - **Health check** — built-in Docker health check on `/api/status`
 - **Persistent cleanup history** — effective runs are stored in `/config/cleanups.db` and searchable from `/history`; dry runs are excluded
+- **History importer** — import legacy Gmail `.eml` notifications with `python scripts/import_history.py --db /config/cleanups.db /path/to/emails`
 
 ---
 

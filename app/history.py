@@ -35,7 +35,8 @@ class HistoryRepository:
                     trigger TEXT NOT NULL,
                     deleted_count INTEGER NOT NULL,
                     error_count INTEGER NOT NULL,
-                    log TEXT NOT NULL
+                    log TEXT NOT NULL,
+                    source_id TEXT UNIQUE
                 );
                 CREATE VIRTUAL TABLE IF NOT EXISTS cleanups_fts USING fts5(
                     log, trigger, content='cleanups', content_rowid='id'
@@ -47,6 +48,10 @@ class HistoryRepository:
                     INSERT INTO cleanups_fts(cleanups_fts, rowid, log, trigger) VALUES ('delete', old.id, old.log, old.trigger);
                 END;
                 """)
+                columns = {row["name"] for row in db.execute("PRAGMA table_info(cleanups)")}
+                if "source_id" not in columns:
+                    db.execute("ALTER TABLE cleanups ADD COLUMN source_id TEXT")
+                db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_cleanups_source_id ON cleanups(source_id) WHERE source_id IS NOT NULL")
                 db.execute("INSERT INTO cleanups_fts(cleanups_fts) VALUES ('rebuild')")
 
     def record(self, result: CleanupResult, trigger: str) -> int:
@@ -59,6 +64,15 @@ class HistoryRepository:
                 (result.timestamp.isoformat(), trigger, result.deleted_count, result.error_count, result.to_log()),
                 )
                 return int(cursor.lastrowid)
+
+    def record_imported(self, timestamp: datetime.datetime, deleted_count: int, error_count: int, log: str, source_id: str) -> bool:
+        with closing(self._connect()) as db:
+            with db:
+                cursor = db.execute(
+                    "INSERT OR IGNORE INTO cleanups(timestamp, trigger, deleted_count, error_count, log, source_id) VALUES (?, 'imported', ?, ?, ?, ?)",
+                    (timestamp.isoformat(), deleted_count, error_count, log, source_id),
+                )
+                return cursor.rowcount == 1
 
     @staticmethod
     def _record(row: sqlite3.Row) -> CleanupRecord:
