@@ -18,3 +18,4 @@ config/servers.json
 # v1 files kept locally for reference — contain personal config, do not commit
 /config.py
 /Transmission_Cleaner.py
+/docs
