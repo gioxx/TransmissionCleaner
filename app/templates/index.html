@@ -105,16 +105,19 @@
         <div class="text-2xl font-bold text-slate-900">{{ total_torrents }}</div>
         <div class="text-sm text-slate-500 mt-1">Total torrents</div>
         <div class="text-xs text-slate-400 mt-2">across all servers</div>
+        <div class="text-xs font-mono text-slate-500 mt-1">{{ total_size_str }} total</div>
       </div>
       <div class="stat-card border-red-100">
         <div class="text-2xl font-bold {% if to_delete_count > 0 %}text-red-600{% else %}text-slate-900{% endif %}">{{ to_delete_count }}</div>
         <div class="text-sm text-slate-500 mt-1">To be removed</div>
         <div class="text-xs text-slate-400 mt-2">on next run</div>
+        <div class="text-xs font-mono text-red-500 mt-1">{{ to_delete_size_str }} to free</div>
       </div>
       <div class="stat-card border-emerald-100">
         <div class="text-2xl font-bold text-emerald-700">{{ to_keep_count }}</div>
         <div class="text-sm text-slate-500 mt-1">Keeping</div>
         <div class="text-xs text-slate-400 mt-2">still seeding</div>
+        <div class="text-xs font-mono text-emerald-600 mt-1">{{ to_keep_size_str }} retained</div>
       </div>
     </div>
 

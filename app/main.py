@@ -15,6 +15,7 @@ from app.config import settings
 from app.history import HistoryRepository
 from app.models import CleanupResult, ServerResult
 from app.notifier import notify_all
+from app.presentation import format_size
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
 logger = logging.getLogger(__name__)
@@ -105,6 +106,9 @@ async def dashboard(request: Request):
     server_results: list[ServerResult] = await asyncio.to_thread(fetch_all_torrents)
     total_torrents = sum(len(sr.torrents) for sr in server_results)
     to_delete_count = sum(len(sr.to_delete) for sr in server_results)
+    total_size = sum(t.size_bytes for sr in server_results for t in sr.torrents)
+    to_delete_size = sum(t.size_bytes for sr in server_results for t in sr.to_delete)
+    to_keep_size = total_size - to_delete_size
     connected_count = sum(1 for sr in server_results if sr.connected)
     next_run = _next_run()
 
@@ -115,6 +119,9 @@ async def dashboard(request: Request):
         "total_torrents": total_torrents,
         "to_delete_count": to_delete_count,
         "to_keep_count": total_torrents - to_delete_count,
+        "total_size_str": format_size(total_size),
+        "to_delete_size_str": format_size(to_delete_size),
+        "to_keep_size_str": format_size(to_keep_size),
         "server_count": len(settings.servers),
         "connected_count": connected_count,
         "next_run_str": _format_dt(next_run),
