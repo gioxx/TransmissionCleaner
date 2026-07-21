@@ -211,7 +211,10 @@ async def api_history(q: str = "", page: int = 1, page_size: int = 20):
 @app.get("/history", response_class=HTMLResponse)
 async def history_page(request: Request, q: str = "", page: int = 1):
     items, total = await asyncio.to_thread(history.search, q, page, 20)
+    next_run = _next_run()
     return templates.TemplateResponse(request, "history.html", {
         "request": request, "items": items, "query": q, "page": max(1, page),
         "total": total, "pages": (total + 19) // 20,
+        "next_run_str": _format_dt(next_run), "next_run_iso": _next_run_iso(next_run),
+        "last_run_str": _format_dt(state.last_run_time), "dry_run": settings.dry_run,
     })

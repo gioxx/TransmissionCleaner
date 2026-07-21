@@ -1,14 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cleanup history</title><script src="https://cdn.tailwindcss.com"></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cleanup history</title><script src="https://cdn.tailwindcss.com"></script><style>.badge{display:inline-flex;align-items:center;padding:.125rem .5rem;border-radius:9999px;font-size:.75rem;font-weight:500}.badge-yellow{background:#fef3c7;color:#92400e}</style></head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
   <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-      <a href="/" class="flex items-center gap-3 hover:opacity-75 transition-opacity">
-        <span class="text-xl">🧹</span>
-        <span class="font-semibold text-slate-900 text-lg">Transmission Cleaner</span>
-      </a>
-      <a class="text-sm text-slate-500 underline hover:text-slate-800" href="/">Dashboard</a>
+      <div class="flex items-center gap-3">
+        <a href="/" class="flex items-center gap-3 hover:opacity-75 transition-opacity">
+          <span class="text-xl">🧹</span>
+          <span class="font-semibold text-slate-900 text-lg">Transmission Cleaner</span>
+        </a>
+        {% if dry_run %}<span class="badge badge-yellow">DRY RUN</span>{% endif %}
+      </div>
+      <div class="flex items-center gap-6 text-sm text-slate-500">
+        <div class="hidden sm:flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block"></span>
+          Next run <span id="countdown" class="font-mono text-slate-700 ml-1">—</span>
+        </div>
+        <div class="hidden md:block">Last run: <span class="text-slate-700">{{ last_run_str }}</span></div>
+      </div>
     </div>
   </header>
   <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-5">
@@ -28,5 +37,27 @@
     {% else %}<div class="rounded-2xl bg-white p-10 text-center text-slate-400">No matching cleanups.</div>{% endfor %}
     {% if pages > 1 %}<div class="flex justify-between text-sm"><a {% if page <= 1 %}class="pointer-events-none text-slate-300"{% endif %} href="/history?q={{ query }}&page={{ page - 1 }}">← Newer</a><span>Page {{ page }} / {{ pages }}</span><a {% if page >= pages %}class="pointer-events-none text-slate-300"{% endif %} href="/history?q={{ query }}&page={{ page + 1 }}">Older →</a></div>{% endif %}
   </main>
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-xs text-slate-400">
+    Transmission Cleaner <span class="font-medium text-slate-500">v1.1.0</span> · Page refreshes automatically every 60 seconds
+    · <a href="/api/history" class="underline hover:text-slate-600">History API</a>
+    · <a href="https://github.com/gioxx/TransmissionCleaner" class="underline hover:text-slate-600">GitHub</a>
+    · <a href="https://github.com/gioxx/TransmissionCleaner#readme" class="underline hover:text-slate-600">Docs</a>
+  </footer>
+  <meta http-equiv="refresh" content="60">
+  <script>
+    const nextRunISO = "{{ next_run_iso }}";
+    const el = document.getElementById("countdown");
+    function tick() {
+      if (!nextRunISO) { el.textContent = "—"; return; }
+      const diff = new Date(nextRunISO) - new Date();
+      if (diff <= 0) { el.textContent = "any moment…"; return; }
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1_000);
+      el.textContent = h > 0 ? `${h}h ${String(m).padStart(2,"0")}m` : `${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`;
+    }
+    tick();
+    setInterval(tick, 1000);
+  </script>
 </body>
 </html>
