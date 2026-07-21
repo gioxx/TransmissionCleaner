@@ -18,6 +18,9 @@ Images are built automatically for `linux/amd64` and `linux/arm64` on every push
 | GitHub Container Registry | `ghcr.io/gioxx/transmissioncleaner:latest` |
 | Docker Hub | `gfsolone/transmissioncleaner:latest` |
 
+For pre-release testing, use `ghcr.io/gioxx/transmissioncleaner:dev` or
+`gfsolone/transmissioncleaner:dev`.
+
 ```bash
 # GHCR
 docker pull ghcr.io/gioxx/transmissioncleaner:latest
@@ -112,6 +115,7 @@ docker compose up -d
 ```
 
 The `config/` directory is mounted as a volume, so `servers.json` persists across container restarts and updates.
+It also contains `cleanups.db`, the SQLite database with the cleanup history. Include this file in backups.
 
 Full `docker-compose.yml` for reference:
 
@@ -443,6 +447,47 @@ The dashboard is served at `http://your-host:8080` and auto-refreshes every 60 s
 | **Dry run** | Fetches torrents and marks what *would* be deleted — no actual deletions, no notifications |
 | **Refresh** | Reloads the page and queries all servers again |
 
+### Import legacy Gmail notifications
+
+The history importer reads plain-text Gmail `.eml` exports matching the old
+`Torrent deletion log` subject. It imports the email date, complete message
+body, server/torrent details, and deletion count into the same persistent
+SQLite history. Imported entries are marked `imported` and are deduplicated by
+the email `Message-ID` (or a file hash when that header is unavailable).
+
+The importer is a command-line utility and does not send notifications. It can
+read one file or every `.eml` file in a directory:
+
+```bash
+# From a source checkout, using a local database
+python scripts/import_history.py \
+  --db /config/cleanups.db \
+  /path/to/exported-emails
+
+# Preview the files without writing history
+python scripts/import_history.py \
+  --dry-run \
+  --db /config/cleanups.db \
+  "/path/to/Torrent deletion log.eml"
+```
+
+For a running Docker Compose deployment, copy the exports into the mounted
+config directory and run the importer inside the container:
+
+```bash
+mkdir -p config/import
+cp /path/to/*.eml config/import/
+docker compose exec transmission-cleaner \
+  python scripts/import_history.py \
+  --db /config/cleanups.db \
+  /config/import
+```
+
+The importer creates the database if necessary. Existing history is retained;
+running the same import again reports duplicates and does not create new rows.
+Dry runs and imported legacy records are separate concepts: dry runs are never
+stored, while legacy emails are stored with the `imported` trigger.
+
 ---
 
 ## REST API
@@ -453,6 +498,8 @@ The dashboard is served at `http://your-host:8080` and auto-refreshes every 60 s
 | `/run` | POST | Trigger cleanup (`?dry=1` for dry run) |
 | `/api/status` | GET | Scheduler and last-run metadata (JSON) |
 | `/api/torrents` | GET | Full torrent list per server (JSON) |
+| `/history` | GET | Searchable cleanup history (HTML) |
+| `/api/history` | GET | Paginated cleanup history search (JSON) |
 
 **`GET /api/status` example:**
 
