@@ -39,7 +39,7 @@ docker pull gfsolone/transmissioncleaner:latest
 - **REST API** — `/api/status` and `/api/torrents` for scripting or external integrations
 - **Health check** — built-in Docker health check on `/api/status`
 - **Persistent cleanup history** — effective runs are stored in `/config/cleanups.db` and searchable from `/history`; dry runs are excluded
-- **History importer** — import legacy Gmail `.eml` notifications with `python scripts/import_history.py --db /config/cleanups.db /path/to/emails`
+- **History importer** — import legacy `.eml` notifications with `python scripts/import_history.py --db /config/cleanups.db /path/to/emails`
 
 ---
 
