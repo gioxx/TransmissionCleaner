@@ -38,6 +38,7 @@ docker pull gfsolone/transmissioncleaner:latest
 - **Notifications** — Telegram, [Resend](https://resend.com) and SMTP, independently enabled, sent in parallel
 - **REST API** — `/api/status` and `/api/torrents` for scripting or external integrations
 - **Health check** — built-in Docker health check on `/api/status`
+- **Persistent cleanup history** — effective runs are stored in `/config/cleanups.db` and searchable from `/history`; dry runs are excluded
 
 ---
 

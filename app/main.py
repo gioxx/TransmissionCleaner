@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.cleaner import fetch_all_torrents, run_cleanup
 from app.config import settings
+from app.history import HistoryRepository
 from app.models import CleanupResult, ServerResult
 from app.notifier import notify_all
 
@@ -36,18 +37,39 @@ class AppState:
 
 state = AppState()
 scheduler = AsyncIOScheduler()
+history = HistoryRepository()
+
+
+def _persist(result: CleanupResult, trigger: str) -> None:
+    if result.dry_run:
+        return
+    try:
+        history.record(result, trigger)
+    except Exception:
+        logger.exception("Could not persist cleanup history")
 
 
 async def scheduled_cleanup() -> None:
     logger.info("Scheduled cleanup starting")
     result = await asyncio.to_thread(run_cleanup)
     state.update(result)
+    await asyncio.to_thread(_persist, result, "scheduled")
     await notify_all(result)
     logger.info("Scheduled cleanup done — removed %d", result.deleted_count)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    try:
+        await asyncio.to_thread(history.initialize)
+        latest = await asyncio.to_thread(history.latest)
+        if latest:
+            state.last_run_time = latest.timestamp
+            state.last_log = latest.log
+            state.last_deleted = latest.deleted_count
+            state.last_errors = latest.error_count
+    except Exception:
+        logger.exception("Could not initialize cleanup history")
     trigger = CronTrigger.from_crontab(settings.cleanup_schedule)
     scheduler.add_job(scheduled_cleanup, trigger, id="cleanup", replace_existing=True)
     scheduler.start()
@@ -118,6 +140,7 @@ async def manual_run(request: Request):
     dry = request.query_params.get("dry") == "1"
     result = await asyncio.to_thread(run_cleanup, dry)
     state.update(result)
+    await asyncio.to_thread(_persist, result, "manual")
     await notify_all(result)
     verb = "Dry run" if dry else "Cleanup"
     state.flash = f"{verb} complete — {result.deleted_count} removed, {result.error_count} errors"
@@ -160,3 +183,28 @@ async def api_torrents():
         }
         for sr in results
     ]
+
+
+@app.get("/api/history")
+async def api_history(q: str = "", page: int = 1, page_size: int = 20):
+    items, total = await asyncio.to_thread(history.search, q, page, page_size)
+    page = max(1, page)
+    page_size = min(100, max(1, page_size))
+    return {
+        "items": [
+            {"id": item.id, "timestamp": item.timestamp.isoformat(), "trigger": item.trigger,
+             "deleted_count": item.deleted_count, "error_count": item.error_count, "log": item.log}
+            for item in items
+        ],
+        "page": page, "page_size": page_size, "total": total,
+        "pages": (total + page_size - 1) // page_size,
+    }
+
+
+@app.get("/history", response_class=HTMLResponse)
+async def history_page(request: Request, q: str = "", page: int = 1):
+    items, total = await asyncio.to_thread(history.search, q, page, 20)
+    return templates.TemplateResponse(request, "history.html", {
+        "request": request, "items": items, "query": q, "page": max(1, page),
+        "total": total, "pages": (total + 19) // 20,
+    })

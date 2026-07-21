@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cleanup history</title><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-5">
+    <div class="flex items-center justify-between"><h1 class="text-2xl font-semibold">📚 Cleanup history</h1><a class="underline text-sm" href="/">← Dashboard</a></div>
+    <form class="flex gap-2" method="get" action="/history"><input class="flex-1 rounded-lg border border-slate-200 px-3 py-2" name="q" value="{{ query }}" placeholder="Search notification text…"><button class="rounded-lg bg-slate-900 px-4 py-2 text-white" type="submit">Search</button></form>
+    <p class="text-sm text-slate-500">{{ total }} effective cleanup(s)</p>
+    {% for item in items %}
+    <article class="rounded-2xl bg-white border border-slate-100 shadow-sm overflow-hidden">
+      <div class="px-5 py-3 border-b border-slate-100 flex justify-between text-sm"><span class="font-medium">{{ item.timestamp.strftime('%Y-%m-%d %H:%M:%S') }} · {{ item.trigger }}</span><span>{{ item.deleted_count }} removed · {{ item.error_count }} errors</span></div>
+      <pre class="p-5 text-xs whitespace-pre-wrap overflow-x-auto">{{ item.log }}</pre>
+    </article>
+    {% else %}<div class="rounded-2xl bg-white p-10 text-center text-slate-400">No matching cleanups.</div>{% endfor %}
+    {% if pages > 1 %}<div class="flex justify-between text-sm"><a {% if page <= 1 %}class="pointer-events-none text-slate-300"{% endif %} href="/history?q={{ query }}&page={{ page - 1 }}">← Newer</a><span>Page {{ page }} / {{ pages }}</span><a {% if page >= pages %}class="pointer-events-none text-slate-300"{% endif %} href="/history?q={{ query }}&page={{ page + 1 }}">Older →</a></div>{% endif %}
+  </main>
+</body>
+</html>
