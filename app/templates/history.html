@@ -6,7 +6,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
   {% include "_header.html" %}
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-5">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-5">
     <div class="flex items-center justify-between"><h1 class="text-2xl font-semibold">📚 Cleanup history</h1><a class="underline text-sm" href="/">← Dashboard</a></div>
     <form class="flex gap-2" method="get" action="/history"><input class="flex-1 rounded-lg border border-slate-200 px-3 py-2" name="q" value="{{ query }}" placeholder="Search notification text…"><button class="rounded-lg bg-slate-900 px-4 py-2 text-white" type="submit">Search</button></form>
     <p class="text-sm text-slate-500">{{ total }} effective cleanup(s)</p>
