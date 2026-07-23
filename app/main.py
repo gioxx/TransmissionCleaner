@@ -72,7 +72,13 @@ async def lifespan(app: FastAPI):
     except Exception:
         logger.exception("Could not initialize cleanup history")
     trigger = CronTrigger.from_crontab(settings.cleanup_schedule)
-    scheduler.add_job(scheduled_cleanup, trigger, id="cleanup", replace_existing=True)
+    scheduler.add_job(
+        scheduled_cleanup,
+        trigger,
+        id="cleanup",
+        replace_existing=True,
+        misfire_grace_time=300,
+    )
     scheduler.start()
     logger.info("Scheduler started with schedule: %s", settings.cleanup_schedule)
     yield
