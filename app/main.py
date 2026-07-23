@@ -107,6 +107,10 @@ def _next_run_iso(dt: datetime.datetime | None) -> str:
     return dt.isoformat()
 
 
+def _tz_name() -> str:
+    return datetime.datetime.now().astimezone().tzname() or "UTC"
+
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
     server_results: list[ServerResult] = await asyncio.to_thread(fetch_all_torrents)
@@ -132,6 +136,7 @@ async def dashboard(request: Request):
         "connected_count": connected_count,
         "next_run_str": _format_dt(next_run),
         "next_run_iso": _next_run_iso(next_run),
+        "tz_name": _tz_name(),
         "last_run_str": _format_dt(state.last_run_time),
         "last_log": state.last_log,
         "last_deleted": state.last_deleted,
