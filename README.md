@@ -167,6 +167,7 @@ docker run -d \
   -e TRANSMISSION_SERVERS='[{"name":"Home","host":"192.168.1.10","port":9091,"user":"admin","password":"s3cr3t"}]' \
   -e DAYS_TO_WAIT=10 \
   -e CLEANUP_SCHEDULE="50 7 * * 3" \
+  -e TZ="Europe/Rome" \
   transmission-cleaner:latest
 ```
 
@@ -196,6 +197,7 @@ services:
       DAYS_TO_WAIT: "10"
       MIN_RATIO: "0"
       CLEANUP_SCHEDULE: "50 7 * * 3"
+      TZ: "Europe/Rome"
       DRY_RUN: "false"
       NOTIFY_ALWAYS: "false"
       TELEGRAM_ENABLED: "false"
@@ -281,6 +283,7 @@ TRANSMISSION_SERVERS=[{"name":"Home","host":"192.168.1.10","port":9091,"user":"a
 | `DAYS_TO_WAIT` | `10` | Delete torrents that have been seeding/stopped for at least this many days |
 | `MIN_RATIO` | `0` | Minimum upload ratio required before deletion. `0` disables this check |
 | `CLEANUP_SCHEDULE` | `50 7 * * 3` | Cron expression for the automatic run |
+| `TZ` | `UTC` | IANA timezone (e.g. `Europe/Rome`) the cron schedule and displayed times are evaluated in. Without this, the container defaults to UTC and `CLEANUP_SCHEDULE`/"Next run" will silently be off from your local time |
 | `DRY_RUN` | `false` | If `true`, log what would be deleted without actually deleting anything |
 
 **Deletion criteria (all must be true):**
