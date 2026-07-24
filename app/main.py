@@ -12,8 +12,10 @@ from fastapi.templating import Jinja2Templates
 
 from app.cleaner import fetch_all_torrents, run_cleanup
 from app.config import settings
+from app.history import HistoryRepository
 from app.models import CleanupResult, ServerResult
 from app.notifier import notify_all
+from app.presentation import format_size
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
 logger = logging.getLogger(__name__)
@@ -36,20 +38,47 @@ class AppState:
 
 state = AppState()
 scheduler = AsyncIOScheduler()
+history = HistoryRepository()
+
+
+def _persist(result: CleanupResult, trigger: str) -> None:
+    if result.dry_run:
+        return
+    try:
+        history.record(result, trigger)
+    except Exception:
+        logger.exception("Could not persist cleanup history")
 
 
 async def scheduled_cleanup() -> None:
     logger.info("Scheduled cleanup starting")
     result = await asyncio.to_thread(run_cleanup)
     state.update(result)
+    await asyncio.to_thread(_persist, result, "scheduled")
     await notify_all(result)
     logger.info("Scheduled cleanup done — removed %d", result.deleted_count)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    try:
+        await asyncio.to_thread(history.initialize)
+        latest = await asyncio.to_thread(history.latest)
+        if latest:
+            state.last_run_time = latest.timestamp
+            state.last_log = latest.log
+            state.last_deleted = latest.deleted_count
+            state.last_errors = latest.error_count
+    except Exception:
+        logger.exception("Could not initialize cleanup history")
     trigger = CronTrigger.from_crontab(settings.cleanup_schedule)
-    scheduler.add_job(scheduled_cleanup, trigger, id="cleanup", replace_existing=True)
+    scheduler.add_job(
+        scheduled_cleanup,
+        trigger,
+        id="cleanup",
+        replace_existing=True,
+        misfire_grace_time=300,
+    )
     scheduler.start()
     logger.info("Scheduler started with schedule: %s", settings.cleanup_schedule)
     yield
@@ -78,25 +107,37 @@ def _next_run_iso(dt: datetime.datetime | None) -> str:
     return dt.isoformat()
 
 
+def _tz_name() -> str:
+    return datetime.datetime.now().astimezone().tzname() or "UTC"
+
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
     server_results: list[ServerResult] = await asyncio.to_thread(fetch_all_torrents)
     total_torrents = sum(len(sr.torrents) for sr in server_results)
     to_delete_count = sum(len(sr.to_delete) for sr in server_results)
+    total_size = sum(t.size_bytes for sr in server_results for t in sr.torrents)
+    to_delete_size = sum(t.size_bytes for sr in server_results for t in sr.to_delete)
+    to_keep_size = total_size - to_delete_size
     connected_count = sum(1 for sr in server_results if sr.connected)
     next_run = _next_run()
 
     flash, state.flash = state.flash, ""
     ctx = {
         "request": request,
+        "page_title": "Transmission Cleaner",
         "server_results": server_results,
         "total_torrents": total_torrents,
         "to_delete_count": to_delete_count,
         "to_keep_count": total_torrents - to_delete_count,
+        "total_size_str": format_size(total_size),
+        "to_delete_size_str": format_size(to_delete_size),
+        "to_keep_size_str": format_size(to_keep_size),
         "server_count": len(settings.servers),
         "connected_count": connected_count,
         "next_run_str": _format_dt(next_run),
         "next_run_iso": _next_run_iso(next_run),
+        "tz_name": _tz_name(),
         "last_run_str": _format_dt(state.last_run_time),
         "last_log": state.last_log,
         "last_deleted": state.last_deleted,
@@ -118,6 +159,7 @@ async def manual_run(request: Request):
     dry = request.query_params.get("dry") == "1"
     result = await asyncio.to_thread(run_cleanup, dry)
     state.update(result)
+    await asyncio.to_thread(_persist, result, "manual")
     await notify_all(result)
     verb = "Dry run" if dry else "Cleanup"
     state.flash = f"{verb} complete — {result.deleted_count} removed, {result.error_count} errors"
@@ -160,3 +202,33 @@ async def api_torrents():
         }
         for sr in results
     ]
+
+
+@app.get("/api/history")
+async def api_history(q: str = "", page: int = 1, page_size: int = 20):
+    items, total = await asyncio.to_thread(history.search, q, page, page_size)
+    page = max(1, page)
+    page_size = min(100, max(1, page_size))
+    return {
+        "items": [
+            {"id": item.id, "timestamp": item.timestamp.isoformat(), "trigger": item.trigger,
+             "deleted_count": item.deleted_count, "error_count": item.error_count, "log": item.log}
+            for item in items
+        ],
+        "page": page, "page_size": page_size, "total": total,
+        "pages": (total + page_size - 1) // page_size,
+    }
+
+
+@app.get("/history", response_class=HTMLResponse)
+async def history_page(request: Request, q: str = "", page: int = 1):
+    items, total = await asyncio.to_thread(history.search, q, page, 20)
+    next_run = _next_run()
+    return templates.TemplateResponse(request, "history.html", {
+        "request": request, "items": items, "query": q, "page": max(1, page),
+        "total": total, "pages": (total + 19) // 20,
+        "next_run_str": _format_dt(next_run), "next_run_iso": _next_run_iso(next_run),
+        "last_run_str": _format_dt(state.last_run_time),
+        "cfg": {"dry_run": settings.dry_run},
+        "page_title": "Transmission Cleaner · History",
+    })

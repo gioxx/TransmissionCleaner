@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include "_head.html" %}
+  <style>.badge{display:inline-flex;align-items:center;padding:.125rem .5rem;border-radius:9999px;font-size:.75rem;font-weight:500}.badge-yellow{background:#fef3c7;color:#92400e}</style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+  {% include "_header.html" %}
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-5">
+    <div class="flex items-center justify-between"><h1 class="text-2xl font-semibold">📚 Cleanup history</h1><a class="underline text-sm" href="/">← Dashboard</a></div>
+    <form class="flex gap-2" method="get" action="/history"><input class="flex-1 rounded-lg border border-slate-200 px-3 py-2" name="q" value="{{ query }}" placeholder="Search notification text…"><button class="rounded-lg bg-slate-900 px-4 py-2 text-white" type="submit">Search</button></form>
+    <p class="text-sm text-slate-500">{{ total }} effective cleanup(s)</p>
+    {% for item in items %}
+    <details class="group rounded-2xl bg-white border border-slate-100 shadow-sm overflow-hidden"{% if query %} open{% endif %}>
+      <summary class="list-none cursor-pointer px-5 py-3 flex items-center justify-between gap-4 text-sm select-none hover:bg-slate-50">
+        <span class="flex items-center gap-2 font-medium"><span class="text-slate-400 transition-transform group-open:rotate-90">▶</span>{{ item.timestamp.strftime('%Y-%m-%d %H:%M:%S') }} · {{ item.trigger }}</span>
+        <span class="shrink-0 text-slate-500">{{ item.deleted_count }} removed · {{ item.error_count }} errors</span>
+      </summary>
+      <div class="border-t border-slate-100">
+        <pre class="p-5 text-xs whitespace-pre-wrap overflow-x-auto">{{ item.log }}</pre>
+      </div>
+    </details>
+    {% else %}<div class="rounded-2xl bg-white p-10 text-center text-slate-400">No matching cleanups.</div>{% endfor %}
+    {% if pages > 1 %}<div class="flex justify-between text-sm"><a {% if page <= 1 %}class="pointer-events-none text-slate-300"{% endif %} href="/history?q={{ query }}&page={{ page - 1 }}">← Newer</a><span>Page {{ page }} / {{ pages }}</span><a {% if page >= pages %}class="pointer-events-none text-slate-300"{% endif %} href="/history?q={{ query }}&page={{ page + 1 }}">Older →</a></div>{% endif %}
+  </main>
+  {% include "_footer.html" %}
+  <meta http-equiv="refresh" content="60">
+  <script>
+    const nextRunISO = "{{ next_run_iso }}";
+    const el = document.getElementById("countdown");
+    function tick() {
+      if (!nextRunISO) { el.textContent = "—"; return; }
+      const diff = new Date(nextRunISO) - new Date();
+      if (diff <= 0) { el.textContent = "any moment…"; return; }
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1_000);
+      el.textContent = h > 0 ? `${h}h ${String(m).padStart(2,"0")}m` : `${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`;
+    }
+    tick();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>

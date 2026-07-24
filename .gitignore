@@ -1,5 +1,3 @@
-.tokensave
-
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -7,6 +5,8 @@ __pycache__/
 /docs/superpowers/
 venv/
 .env
+.tokensave
+/docs
 
 # stack.env and .env hold local config — only the .example files are tracked
 stack.env
@@ -14,7 +14,3 @@ stack.env
 
 # servers.json holds real credentials — only servers.json.example is tracked
 config/servers.json
-
-# v1 files kept locally for reference — contain personal config, do not commit
-/config.py
-/Transmission_Cleaner.py
