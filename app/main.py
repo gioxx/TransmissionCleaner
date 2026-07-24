@@ -125,6 +125,7 @@ async def dashboard(request: Request):
     flash, state.flash = state.flash, ""
     ctx = {
         "request": request,
+        "page_title": "Transmission Cleaner",
         "server_results": server_results,
         "total_torrents": total_torrents,
         "to_delete_count": to_delete_count,
@@ -229,5 +230,5 @@ async def history_page(request: Request, q: str = "", page: int = 1):
         "next_run_str": _format_dt(next_run), "next_run_iso": _next_run_iso(next_run),
         "last_run_str": _format_dt(state.last_run_time),
         "cfg": {"dry_run": settings.dry_run},
-        "page_title": "Cleanup history",
+        "page_title": "Transmission Cleaner · History",
     })
