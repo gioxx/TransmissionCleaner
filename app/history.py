@@ -6,6 +6,12 @@ from contextlib import closing
 from app.models import CleanupResult
 
 
+def _to_utc_isoformat(timestamp: datetime.datetime) -> str:
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.astimezone()
+    return timestamp.astimezone(datetime.timezone.utc).isoformat()
+
+
 @dataclass(frozen=True)
 class CleanupRecord:
     id: int
@@ -61,7 +67,7 @@ class HistoryRepository:
             with db:
                 cursor = db.execute(
                 "INSERT INTO cleanups(timestamp, trigger, deleted_count, error_count, log) VALUES (?, ?, ?, ?, ?)",
-                (result.timestamp.isoformat(), trigger, result.deleted_count, result.error_count, result.to_log()),
+                (_to_utc_isoformat(result.timestamp), trigger, result.deleted_count, result.error_count, result.to_log()),
                 )
                 return int(cursor.lastrowid)
 
@@ -70,7 +76,7 @@ class HistoryRepository:
             with db:
                 cursor = db.execute(
                     "INSERT OR IGNORE INTO cleanups(timestamp, trigger, deleted_count, error_count, log, source_id) VALUES (?, 'imported', ?, ?, ?, ?)",
-                    (timestamp.isoformat(), deleted_count, error_count, log, source_id),
+                    (_to_utc_isoformat(timestamp), deleted_count, error_count, log, source_id),
                 )
                 return cursor.rowcount == 1
 
