@@ -16,8 +16,10 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true", help="Only report what would be imported")
     args = parser.parse_args()
     files = sorted({file for path in args.paths for file in (path.glob("*.eml") if path.is_dir() else [path]) if file.suffix.lower() == ".eml"})
-    repository = HistoryRepository(args.db)
-    repository.initialize()
+    repository = None
+    if not args.dry_run:
+        repository = HistoryRepository(args.db)
+        repository.initialize()
     counts = {"imported": 0, "duplicate": 0, "skipped": 0}
     for file in files:
         if args.dry_run:
