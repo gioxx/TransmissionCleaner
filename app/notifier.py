@@ -47,7 +47,7 @@ def send_resend(result: CleanupResult) -> None:
         import resend
         resend.api_key = settings.resend_api_key
         params: resend.Emails.SendParams = {
-            "from": settings.resend_from,
+            "from": f"Transmission Cleaner <{settings.resend_from}>",
             "to": [settings.resend_to],
             "subject": f"Transmission Cleaner — {result.deleted_count} removed",
             "text": result.to_email_body(),
@@ -65,7 +65,7 @@ def send_smtp(result: CleanupResult) -> None:
         return
     msg = MIMEMultipart()
     msg["Subject"] = f"Transmission Cleaner — {result.deleted_count} removed"
-    msg["From"] = settings.smtp_from
+    msg["From"] = f"Transmission Cleaner <{settings.smtp_from}>"
     msg["To"] = settings.smtp_to
     msg.attach(MIMEText(result.to_email_body(), "plain", "utf-8"))
     try:
