@@ -3,6 +3,6 @@ uvicorn[standard]>=0.54.0
 transmission-rpc>=7.0.12
 apscheduler>=3.11.3
 jinja2>=3.1.6
-python-multipart>=0.0.32
+python-multipart>=0.0.33
 httpx>=0.28.1
 resend>=2.50.1
